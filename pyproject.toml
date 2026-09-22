@@ -1,0 +1,133 @@
+# pyproject.toml
+[project]
+name = "sbsys-client"
+version = "0.1.0"
+description = "Delt Python-klient til SBSYS ESDH REST API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "AAK-MBU" }]
+keywords = ["sbsys", "esdh", "sagsbehandling", "kommune"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+    "Private :: Do Not Upload",
+]
+
+dependencies = [
+    "httpx>=0.28,<1.0",
+    "pydantic>=2.7,<3.0",
+    "pydantic-settings>=2.4,<3.0",
+    "rich>=15.0.0",
+    "tenacity>=9.0,<10.0",
+]
+
+[project.urls]
+Repository = "https://github.com/AAK-MBU/api-sbsys-client"
+Issues = "https://github.com/AAK-MBU/api-sbsys-client/issues"
+Changelog = "https://github.com/AAK-MBU/api-sbsys-client/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sbsys"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/sbsys", "tests", "README.md", "CHANGELOG.md", "LICENSE"]
+
+# ---------------------------------------------------------------------------
+# Udvikling
+# ---------------------------------------------------------------------------
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "respx>=0.22",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "python-dotenv>=1.0",
+    "datamodel-code-generator[http]>=0.26",
+]
+
+# ---------------------------------------------------------------------------
+# Test
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+    "-m", "not integration",
+]
+markers = [
+    "integration: rammer et rigtigt SBSYS-testmiljoe (kraever .env)",
+    "contract: validerer at rigtige API-svar stadig parser til vores modeller",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["sbsys"]
+branch = true
+omit = ["src/sbsys/models/generated/*"]
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "@overload"]
+
+# ---------------------------------------------------------------------------
+# Lint og formatering
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+extend-exclude = ["src/sbsys/models/generated"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "B", "SIM", "ASYNC", "S", "T20", "D", "RUF"]
+ignore = [
+    "S101",  # assert is fine in tests
+    "D203",  # mutually exclusive with D211
+    "D213",  # mutually exclusive with D212
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "D104"]  # hardcoded test credentials; no package docstring needed
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["sbsys"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# Typer
+# ---------------------------------------------------------------------------
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "tests", "scripts"]
+strict = true
+plugins = ["pydantic.mypy"]
+warn_unreachable = true
+exclude = ["src/sbsys/models/generated/"]
+
+[[tool.mypy.overrides]]
+module = "sbsys.models.generated.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

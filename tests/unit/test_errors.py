@@ -63,9 +63,7 @@ def test_serverfejl_genforsoeges_paa_get(respx_mock, client):
 
 def test_oprettelse_genforsoeges_ikke(respx_mock, client):
     """A 5xx on case creation is not retried, so a timeout cannot duplicate a case."""
-    route = respx_mock.post(f"{BASE_URL}/api/v10/sag/template").mock(
-        return_value=httpx.Response(503)
-    )
+    route = respx_mock.post(f"{BASE_URL}/api/sag/template").mock(return_value=httpx.Response(503))
     with pytest.raises(SbsysServerError):
         client.sager.opret_fra_skabelon(titel="Test", skabelon_id=1, sagsbehandler_id=2, part_id=3)
     assert route.call_count == 1

@@ -113,7 +113,7 @@ class _FakeJournalnotater:
             The recorded note, with a generated id.
         """
         self.oprettede.append((sags_id, titel, notat))
-        return Journalnotat(Id=len(self.oprettede), SagID=sags_id, Titel=titel, Notat=notat)
+        return Journalnotat(Id=len(self.oprettede), SagID=sags_id, Overskrift=titel, Note=notat)
 
 
 class FakeSbsysClient:

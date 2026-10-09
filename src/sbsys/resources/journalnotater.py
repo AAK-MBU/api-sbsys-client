@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from sbsys.models.journalnotat import Journalnotat
 from sbsys.resources._base import Resource
 
@@ -19,7 +21,7 @@ class Journalnotater(Resource):
         Returns:
             Every note on the case, or an empty list if it has none.
         """
-        data = self._t.json("GET", f"/api/sag/{sags_id}/journalnotater")
+        data = self._t.json("GET", f"/api/sag/{sags_id}/journalarknotes")
         rows = data.get("Results", data) if isinstance(data, dict) else data
         return [Journalnotat.model_validate(r) for r in rows or []]
 
@@ -29,6 +31,8 @@ class Journalnotater(Resource):
         SBSYS renders HTML in the note body, which is how tables and
         formatting get in. Escape any value interpolated into that HTML — note
         bodies routinely contain names and addresses straight from a citizen.
+
+        The contact time SBSYS requires is set to now.
 
         Never retried, since a replay would leave duplicate notes on the case.
 
@@ -44,7 +48,12 @@ class Journalnotater(Resource):
             SbsysConflictError: If the case does not accept new notes, e.g.
                 because it is closed.
         """
-        body = {"SagID": sags_id, "Titel": titel, "Notat": notat}
+        body = {
+            "SagID": sags_id,
+            "Overskrift": titel,
+            "Note": notat,
+            "KontaktTidspunkt": datetime.now().astimezone().isoformat(),
+        }
         return Journalnotat.model_validate(
-            self._t.json("POST", "/api/journalnotat", json=body, retry=False)
+            self._t.json("POST", "/api/journalarknote/create", json=body, retry=False)
         )

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from sbsys.models._base import SbsysModel
 
@@ -39,7 +39,17 @@ class Part(SbsysModel):
 
     id: int
     navn: str | None = None
-    cpr_nummer: str | None = Field(default=None, alias="CPRnummer")
-    cvr_nummer: str | None = Field(default=None, alias="CVRnummer")
+    # Party endpoints spell it ``CPRnummer``, the person/company endpoints
+    # ``CprNummer``.
+    cpr_nummer: str | None = Field(
+        default=None,
+        alias="CPRnummer",
+        validation_alias=AliasChoices("CPRnummer", "CprNummer"),
+    )
+    cvr_nummer: str | None = Field(
+        default=None,
+        alias="CVRnummer",
+        validation_alias=AliasChoices("CVRnummer", "CvrNummer"),
+    )
     adresse: str | None = None
     part_type: PartType | None = None

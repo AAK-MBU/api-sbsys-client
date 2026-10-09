@@ -34,7 +34,7 @@ class Opslag(Resource):
         Returns:
             The templates, as SBSYS returns them.
         """
-        data = self._t.json("GET", "/api/sag/sagsskabelon")
+        data = self._t.json("GET", "/api/sagsskabelon")
         return list(data or [])
 
     def sagsskabelon(self, skabelon_id: int) -> dict[str, Any]:
@@ -49,7 +49,7 @@ class Opslag(Resource):
         Raises:
             SbsysNotFoundError: If no template has that id.
         """
-        return dict(self._t.json("GET", f"/api/sag/sagsskabelon/{skabelon_id}"))
+        return dict(self._t.json("GET", f"/api/sagsskabelon/{skabelon_id}"))
 
     def statusser(self) -> list[Sagsstatus]:
         """List the case statuses configured in the installation.
@@ -57,22 +57,29 @@ class Opslag(Resource):
         Returns:
             Every status, in the order SBSYS returned them.
         """
-        data = self._t.json("GET", "/api/sag/sagsstatus")
+        data = self._t.json("GET", "/api/sag/sagStatusList")
         return [Sagsstatus.model_validate(r) for r in data or []]
 
     def find_brugere(self, soegetekst: str) -> list[Sagsbehandler]:
-        """Search for users by name or initials.
+        """Search for users by name or login.
+
+        SBSYS' search is a filter where every given field must match, so the
+        name and the login are searched separately and the results merged.
 
         Args:
             soegetekst: Free-text search. SBSYS matches substrings, so short
                 input can return many users.
 
         Returns:
-            Matching users, or an empty list.
+            Matching users without duplicates, or an empty list.
         """
-        data = self._t.json("GET", "/api/bruger/search", params={"q": soegetekst})
-        rows = data.get("Results", data) if isinstance(data, dict) else data
-        return [Sagsbehandler.model_validate(r) for r in rows or []]
+        fundne: dict[int, Sagsbehandler] = {}
+        for felt in ("LogonId", "Navn"):
+            data = self._t.json("POST", "/api/bruger/search", json={felt: soegetekst}, retry=True)
+            for r in data or []:
+                bruger = Sagsbehandler.model_validate(r)
+                fundne.setdefault(bruger.id, bruger)
+        return list(fundne.values())
 
     @lru_cache(maxsize=256)  # noqa: B019
     def bruger_id_for_initialer(self, initialer: str) -> int:
@@ -93,8 +100,9 @@ class Opslag(Resource):
         Raises:
             SbsysNotFoundError: If no user has exactly those initials.
         """
-        brugere = self.find_brugere(initialer)
+        data = self._t.json("POST", "/api/bruger/search", json={"LogonId": initialer}, retry=True)
+        brugere = [Sagsbehandler.model_validate(r) for r in data or []]
         traef = [b for b in brugere if (b.initialer or "").lower() == initialer.lower()]
         if not traef:
-            raise SbsysNotFoundError(404, "GET", "/api/bruger/search", f"No user: {initialer}")
+            raise SbsysNotFoundError(404, "POST", "/api/bruger/search", f"No user: {initialer}")
         return traef[0].id

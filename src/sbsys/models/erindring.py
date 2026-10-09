@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from sbsys.models._base import SbsysModel
 
@@ -24,5 +24,7 @@ class Erindring(SbsysModel):
     id: int | None = None
     navn: str | None = None
     beskrivelse: str | None = None
-    sags_id: int | None = Field(default=None, alias="SagID")
+    sags_id: int | None = Field(
+        default=None, alias="SagId", validation_alias=AliasChoices("SagId", "SagID")
+    )
     frist: date | None = Field(default=None, alias="Deadline")

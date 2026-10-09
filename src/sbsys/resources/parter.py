@@ -31,10 +31,10 @@ class Parter(Resource):
                 endpoint answers ``200`` with an empty result, which is
                 translated here so callers get one consistent failure mode.
         """
-        data = self._t.json("GET", "/api/person/search", params={"cpr": normaliser_cpr(cpr)})
-        rows = data.get("Results", data) if isinstance(data, dict) else data
+        body = {"CprNummer": normaliser_cpr(cpr)}
+        rows = self._t.json("POST", "/api/person/search", json=body, retry=True)
         if not rows:
-            raise SbsysNotFoundError(404, "GET", "/api/person/search", "Citizen not found")
+            raise SbsysNotFoundError(404, "POST", "/api/person/search", "Citizen not found")
         return Part.model_validate(rows[0] if isinstance(rows, list) else rows)
 
     def hent_firma(self, cvr: str) -> Part:
@@ -49,8 +49,7 @@ class Parter(Resource):
         Raises:
             SbsysNotFoundError: If SBSYS knows no such company.
         """
-        data = self._t.json("GET", "/api/firma/search", params={"cvr": cvr})
-        rows = data.get("Results", data) if isinstance(data, dict) else data
+        rows = self._t.json("POST", "/api/firma/search", json={"CvrNummer": cvr}, retry=True)
         if not rows:
-            raise SbsysNotFoundError(404, "GET", "/api/firma/search", "Company not found")
+            raise SbsysNotFoundError(404, "POST", "/api/firma/search", "Company not found")
         return Part.model_validate(rows[0] if isinstance(rows, list) else rows)

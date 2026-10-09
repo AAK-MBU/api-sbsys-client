@@ -34,7 +34,7 @@ class Opslag(Resource):
         Returns:
             The templates, as SBSYS returns them.
         """
-        data = self._t.json("GET", "/api/sag/sagsskabelon")
+        data = self._t.json("GET", "/api/sagsskabelon")
         return list(data or [])
 
     def sagsskabelon(self, skabelon_id: int) -> dict[str, Any]:
@@ -49,7 +49,7 @@ class Opslag(Resource):
         Raises:
             SbsysNotFoundError: If no template has that id.
         """
-        return dict(self._t.json("GET", f"/api/sag/sagsskabelon/{skabelon_id}"))
+        return dict(self._t.json("GET", f"/api/sagsskabelon/{skabelon_id}"))
 
     def statusser(self) -> list[Sagsstatus]:
         """List the case statuses configured in the installation.

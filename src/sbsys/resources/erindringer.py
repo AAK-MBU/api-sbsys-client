@@ -22,7 +22,7 @@ class Erindringer(Resource):
             Every reminder on the case, including completed ones, or an empty
             list if it has none.
         """
-        data = self._t.json("GET", f"/api/sag/{sags_id}/erindringer")
+        data = self._t.json("GET", f"/api/erindring/sag/{sags_id}")
         rows = data.get("Results", data) if isinstance(data, dict) else data
         return [Erindring.model_validate(r) for r in rows or []]
 
@@ -58,13 +58,18 @@ class Erindringer(Resource):
             SbsysAPIError: If SBSYS rejects the reminder, e.g. on an unknown
                 type or user id.
         """
-        body: dict[str, object] = {"SagID": sags_id, "Navn": navn, "Beskrivelse": beskrivelse}
+        body: dict[str, object] = {
+            "SagId": sags_id,
+            "Navn": navn,
+            "Beskrivelse": beskrivelse,
+            "HarDeadline": frist is not None,
+        }
         if frist is not None:
             body["Deadline"] = frist.isoformat()
         if ansvarlig_id is not None:
-            body["AnsvarligID"] = ansvarlig_id
+            body["Ansvarlig"] = {"Id": ansvarlig_id}
         if erindringstype_id is not None:
-            body["ErindringTypeID"] = erindringstype_id
+            body["ErindringType"] = {"Id": erindringstype_id}
         return Erindring.model_validate(
             self._t.json("POST", "/api/erindring", json=body, retry=False)
         )

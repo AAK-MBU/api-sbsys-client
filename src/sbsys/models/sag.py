@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 
 from sbsys.models._base import SbsysModel
 from sbsys.models.part import Part
@@ -33,11 +33,14 @@ class Sagsbehandler(SbsysModel):
         id: SBSYS user id, required when creating or reassigning a case.
         navn: Full name.
         initialer: Short login initials, which is usually what a human knows.
+            The user search returns this as ``LogonId``.
     """
 
     id: int
     navn: str | None = None
-    initialer: str | None = None
+    initialer: str | None = Field(
+        default=None, validation_alias=AliasChoices("Initialer", "LogonId")
+    )
 
 
 class Sag(SbsysModel):

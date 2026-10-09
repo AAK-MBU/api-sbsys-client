@@ -134,20 +134,22 @@ class Sager(Resource):
         body = {
             "SagsTitel": titel,
             "SkabelonId": skabelon_id,
-            "SagsbehandlerID": sagsbehandler_id,
+            "SagsBehandlerID": sagsbehandler_id,
             "PrimaryPart": part,
             "Parts": [part],
         }
-        return Sag.model_validate(
-            self._t.json("POST", "/api/v10/sag/template", json=body, retry=False)
-        )
+        return Sag.model_validate(self._t.json("POST", "/api/sag/template", json=body, retry=False))
 
     def opdater(self, sags_id: int, aendringer: dict[str, Any]) -> Sag:
         """Update fields on a case.
 
-        SBSYS expects whole objects for some fields, so fetch the case first,
-        change what you need, and pass that back rather than guessing at a
-        minimal payload.
+        SBSYS only offers a full ``PUT`` of the case, so the case is fetched,
+        the changes are laid over it (top-level keys only), and the whole
+        object is sent back. Nested values such as ``Sagsstatus`` replace the
+        existing object entirely, so pass them whole.
+
+        Not retried. Another change made between the fetch and the ``PUT`` is
+        overwritten.
 
         Args:
             sags_id: Internal case id.
@@ -163,9 +165,9 @@ class Sager(Resource):
         """
         if not aendringer:
             raise SbsysValidationError("No changes given")
-        return Sag.model_validate(
-            self._t.json("PATCH", f"/api/sag/{sags_id}", json=aendringer, retry=False)
-        )
+        sag = dict(self._t.json("GET", f"/api/sag/{sags_id}"))
+        sag.update(aendringer)
+        return Sag.model_validate(self._t.json("PUT", f"/api/sag/{sags_id}", json=sag, retry=False))
 
     def tilfoej_part(self, sags_id: int, part_id: int, part_type: PartType) -> None:
         """Attach another party to a case.
@@ -181,7 +183,7 @@ class Sager(Resource):
         """
         self._t.request(
             "POST",
-            f"/api/sag/{sags_id}/parter",
+            f"/api/sag/{sags_id}/part",
             json={"PartId": part_id, "PartType": str(part_type)},
             retry=False,
         )

@@ -119,6 +119,13 @@ Operationerne er grupperet i ressourcer på klienten.
 | `sbsys.erindringer` | `hent_paa_sag`, `opret` |
 | `sbsys.opslag` | `sagsskabeloner`, `sagsskabelon`, `statusser`, `find_brugere`, `bruger_id_for_initialer` |
 
+SBSYS kan kun opdatere en sag ved at erstatte hele sagen. `sager.opdater` henter
+derfor sagen, lægger ændringerne ovenpå og sender den hele tilbage med `PUT`. En
+ændring, som en anden laver mellem hentningen og `PUT`, bliver overskrevet.
+
+`opslag.bruger_id_for_initialer` matcher initialerne præcist mod brugerens
+`LogonId` i SBSYS.
+
 Søgninger returnerer en iterator, der henter sider løbende. Stopper du efter tre
 resultater, hentes kun første side:
 
@@ -144,7 +151,7 @@ Oprettelser gentages aldrig — en gentagelse ville give dubletsager.
 ### Endpoints vi ikke har wrappet endnu
 
 ```python
-adviseringer = sbsys.request("GET", f"/api/sag/{sags_id}/adviseringer")
+kladder = sbsys.request("GET", f"/api/sag/{sags_id}/kladder")
 ```
 
 Understøttet og forventet brug. Sig til bagefter, så promoverer vi endpointet

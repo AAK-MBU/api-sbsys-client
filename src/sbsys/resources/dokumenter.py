@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -96,7 +97,7 @@ class Dokumenter(Resource):
         return sti
 
     def upload(self, sags_id: int, sti: Path | str, *, navn: str | None = None) -> Dokument:
-        """Upload a file to a case.
+        """Upload a file to a case, journalising it as a new document.
 
         Never retried: a replayed upload would leave duplicate documents on
         the case.
@@ -115,11 +116,13 @@ class Dokumenter(Resource):
             OSError: If the file cannot be read.
         """
         sti = Path(sti)
+        metadata = {"SagID": sags_id, "DokumentNavn": navn or sti.name}
         with sti.open("rb") as fh:
             data = self._t.json(
                 "POST",
-                f"/api/sag/{sags_id}/dokumenter",
-                files={"file": (navn or sti.name, fh)},
+                "/api/dokument/journaliser",
+                files={"file": (sti.name, fh)},
+                data={"json": json.dumps(metadata)},
                 retry=False,
             )
         return Dokument.model_validate(data)

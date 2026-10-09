@@ -122,7 +122,7 @@ class SbsysClient:
         Args:
             method: HTTP method.
             path: Path relative to the base URL, e.g.
-                ``"/api/sag/123/adviseringer"``.
+                ``"/api/sag/123/kladder"``.
             **kwargs: ``json``, ``params``, ``files``, ``data``, ``headers``
                 and ``retry``, as taken by the transport. Retrying defaults to
                 on for idempotent methods only.
